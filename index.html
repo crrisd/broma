@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Broma inofensiva</title>
+  <style>
+    :root { --bg: #0f172a; --card: #111827; --text: #e5e7eb; --accent: #3b82f6; }
+    html, body { height: 100%; margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+    .card {
+      position: relative;
+      width: min(520px, 92vw);
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 28px 24px 72px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      text-align: center;
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(22px, 4vw, 28px); }
+    p { margin: 0 0 16px; opacity:.9; }
+    .consent {
+      margin: 12px auto 20px;
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.35);
+      padding: 10px 12px; border-radius: 12px; font-size: 14px;
+    }
+    #area {
+      position: relative;
+      height: 320px;
+      margin-top: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.15);
+      overflow: hidden;
+    }
+    #btn {
+      position: absolute;
+      left: 50%; top: 50%; transform: translate(-50%, -50%);
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white; font-weight: 600;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+      box-shadow: 0 6px 16px rgba(59,130,246,.45);
+    }
+    #close-ok {
+      display:none; margin-top: 14px;
+      background: #10b981; color:#062b22;
+      border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer;
+    }
+    .timer { margin-top: 10px; font-size: 14px; opacity:.85; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="dialog" aria-live="polite" aria-label="Broma inofensiva">
+      <h1>Hola 👋</h1>
+      <p>Durante 15 segundos el botón <strong>“Cerrar”</strong> se moverá. ¡Intenta atraparlo!</p>
+
+      <div class="consent">
+        <input type="checkbox" id="agree" />
+        <label for="agree">Acepto jugar la broma durante 15 s</label>
+      </div>
+
+      <button id="start">Iniciar</button>
+      <div id="area" class="hidden" aria-label="Área de juego">
+        <button id="btn" aria-label="Cerrar">Cerrar</button>
+      </div>
+
+      <div class="timer hidden" id="timer">Tiempo restante: <span id="left">15</span>s</div>
+      <button id="close-ok">Cerrar de verdad</button>
+    </div>
+  </div>
+
+  <script>
+    const start = document.getElementById('start');
+    const agree = document.getElementById('agree');
+    const area = document.getElementById('area');
+    const btn = document.getElementById('btn');
+    const timerBox = document.getElementById('timer');
+    const leftSpan = document.getElementById('left');
+    const closeOk = document.getElementById('close-ok');
+
+    let moving = false, endAt = 0, tickId = null;
+
+    function rnd(min, max){ return Math.random()*(max-min)+min; }
+
+    function moveButton() {
+      const rect = area.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      const maxX = rect.width - btnRect.width - 8;
+      const maxY = rect.height - btnRect.height - 8;
+      const x = rnd(8, Math.max(8, maxX));
+      const y = rnd(8, Math.max(8, maxY));
+      btn.style.left = x + 'px';
+      btn.style.top  = y + 'px';
+      btn.style.transform = 'translate(0,0)';
+    }
+
+    function startGame() {
+      if (!agree.checked) {
+        alert('Marca “Acepto jugar la broma” antes de iniciar.');
+        return;
+      }
+      start.style.display = 'none';
+      area.classList.remove('hidden');
+      timerBox.classList.remove('hidden');
+      closeOk.style.display = 'none';
+
+      moving = true;
+      endAt = Date.now() + 15000;
+      leftSpan.textContent = '15';
+      moveButton();
+
+      // PC: se mueve al acercar el mouse
+      btn.addEventListener('mouseover', ev => { if (moving) moveButton(); });
+
+      // Móvil: se mueve al intentar tocar
+      btn.addEventListener('touchstart', ev => {
+        if (moving) {
+          ev.preventDefault(); // que no alcance a pulsarlo
+          moveButton();
+        }
+      }, {passive:false});
+
+      tickId = setInterval(() => {
+        const left = Math.max(0, Math.ceil((endAt - Date.now())/1000));
+        leftSpan.textContent = String(left);
+        if (Date.now() >= endAt) stopGame();
+      }, 250);
+    }
+
+    function stopGame() {
+      moving = false;
+      clearInterval(tickId);
+      timerBox.classList.add('hidden');
+      // Ahora sí permitimos cerrar
+      closeOk.style.display = 'inline-block';
+      closeOk.onclick = () => {
+        document.querySelector('.card').innerHTML =
+          '<h1>¡Gracias por jugar! 🎉</h1><p>Fin de la broma.</p>';
+      };
+    }
+
+    // Si alguien acierta a pulsar antes de tiempo, no hace nada
+    btn.addEventListener('click', ev => {
+      if (moving) ev.preventDefault();
+    });
+
+    document.getElementById('start').addEventListener('click', startGame);
+  </script>
+</body>
+</html>
