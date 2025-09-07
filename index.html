@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Broma inofensiva</title>
+  <title>Broma con sonido</title>
   <style>
     :root { --bg: #0f172a; --card: #111827; --text: #e5e7eb; --accent: #3b82f6; }
     html, body { height: 100%; margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--bg); color: var(--text); }
@@ -62,9 +62,9 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="card" role="dialog" aria-live="polite" aria-label="Broma inofensiva">
-      <h1>Holaaaaaaaaa👋</h1>
-      <p>Durante 15 segundos el botón <strong>“Cerrar”</strong> se moverá. ¡Intenta atraparlo!</p>
+    <div class="card" role="dialog" aria-live="polite" aria-label="Broma divertida">
+      <h1>Holaaaaa 👋</h1>
+      <p>TOCA EL BOTÓN <strong>“CERRAR”</strong> se moverá. ¡Intenta atraparlo!</p>
 
       <div class="consent">
         <input type="checkbox" id="agree" />
@@ -74,18 +74,17 @@
       <button id="start">Iniciar</button>
       <div id="area" class="hidden" aria-label="Área de juego">
         <img src="descargarburro.webp" alt="Burro divertido"
-     style="width:100%; height:100%; object-fit:cover; border-radius:14px;" />
-
+             style="width:100%; height:100%; object-fit:cover; border-radius:14px;" />
         <button id="btn" aria-label="Cerrar">Cerrar</button>
       </div>
 
       <div class="timer hidden" id="timer">Tiempo restante: <span id="left">15</span>s</div>
-      <img src="descargarburro.webp" alt="Imagen divertida"
-     style="width:100%; height:100%; object-fit:cover; border-radius:14px;" />
-
       <button id="close-ok">Cerrar de verdad</button>
     </div>
   </div>
+
+  <!-- 🎵 Sonido -->
+  <audio id="sonido-broma" src="sonido.mp3"></audio>
 
   <script>
     const start = document.getElementById('start');
@@ -95,6 +94,7 @@
     const timerBox = document.getElementById('timer');
     const leftSpan = document.getElementById('left');
     const closeOk = document.getElementById('close-ok');
+    const audio = document.getElementById('sonido-broma');
 
     let moving = false, endAt = 0, tickId = null;
 
@@ -117,6 +117,10 @@
         alert('Marca “Acepto jugar la broma” antes de iniciar.');
         return;
       }
+
+      // 🎵 Reproducir sonido
+      audio.play().catch(e => console.log("El navegador bloqueó el sonido hasta que el usuario interactúe."));
+
       start.style.display = 'none';
       area.classList.remove('hidden');
       timerBox.classList.remove('hidden');
@@ -127,13 +131,10 @@
       leftSpan.textContent = '15';
       moveButton();
 
-      // PC: se mueve al acercar el mouse
       btn.addEventListener('mouseover', ev => { if (moving) moveButton(); });
-
-      // Móvil: se mueve al intentar tocar
       btn.addEventListener('touchstart', ev => {
         if (moving) {
-          ev.preventDefault(); // que no alcance a pulsarlo
+          ev.preventDefault();
           moveButton();
         }
       }, {passive:false});
@@ -149,7 +150,6 @@
       moving = false;
       clearInterval(tickId);
       timerBox.classList.add('hidden');
-      // Ahora sí permitimos cerrar
       closeOk.style.display = 'inline-block';
       closeOk.onclick = () => {
         document.querySelector('.card').innerHTML =
@@ -157,12 +157,11 @@
       };
     }
 
-    // Si alguien acierta a pulsar antes de tiempo, no hace nada
     btn.addEventListener('click', ev => {
       if (moving) ev.preventDefault();
     });
 
-    document.getElementById('start').addEventListener('click', startGame);
+    start.addEventListener('click', startGame);
   </script>
 </body>
 </html>
